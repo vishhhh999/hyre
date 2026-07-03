@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Search, Inbox, User } from 'lucide-react'
 import { C, FONT, R } from './lib/tokens.js'
 import { DEFAULT_PROFILE } from './lib/data.js'
@@ -14,12 +14,32 @@ const NAV = [
   { id: 'profile',  label: 'Profile',  icon: User },
 ]
 
+// localStorage helpers
+const LS = {
+  get: (key, fallback) => {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback }
+  },
+  set: (key, val) => {
+    try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
+  },
+}
+
 export default function App() {
   const [nav, setNav] = useState('discover')
-  const [applied, setApplied] = useState([])          // starts empty — nothing fake
-  const [dismissed, setDismissed] = useState([])      // dismissed job IDs
+  const [applied, setApplied] = useState(() => LS.get('hyre:applied', []))
+  const [dismissed, setDismissed] = useState(() => LS.get('hyre:dismissed', []))
   const [deckQueue, setDeckQueue] = useState(null)
-  const [profile, setProfile] = useState({ ...DEFAULT_PROFILE })
+  const [profile, setProfile] = useState(() => LS.get('hyre:profile', { ...DEFAULT_PROFILE }))
+
+  // Persist on every change
+  useEffect(() => { LS.set('hyre:applied', applied) }, [applied])
+  useEffect(() => { LS.set('hyre:dismissed', dismissed) }, [dismissed])
+  useEffect(() => { LS.set('hyre:profile', profile) }, [profile])
+
+  const handleSaveProfile = useCallback((data) => {
+    setProfile(data)
+    LS.set('hyre:profile', data)
+  }, [])
 
   const handleSend = useCallback((job) => {
     setApplied(p => {
@@ -47,8 +67,6 @@ export default function App() {
     (Date.now() - new Date(a.sentAt)) / 86400000 >= 7 &&
     a.followUps === 0
   ).length
-
-  const gmailConnected = false  // honest — not connected until OAuth is wired
 
   return (
     <>
@@ -109,24 +127,6 @@ export default function App() {
               )
             })}
           </nav>
-
-          {/* Honest connection status */}
-          <div style={{ padding: '18px 26px', borderTop: `1px solid ${C.border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                background: gmailConnected ? C.green : C.t3,
-              }} />
-              <Eyebrow color={C.t3}>
-                {gmailConnected ? 'Gmail connected' : 'Gmail not connected'}
-              </Eyebrow>
-            </div>
-            {!gmailConnected && (
-              <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.t3, marginTop: 5, lineHeight: 1.5 }}>
-                Emails open in Gmail as drafts
-              </div>
-            )}
-          </div>
         </aside>
 
         {/* Main */}
@@ -148,7 +148,7 @@ export default function App() {
             />
           )}
           {nav === 'profile' && (
-            <Profile profile={profile} onSave={setProfile} />
+            <Profile profile={profile} onSave={handleSaveProfile} />
           )}
         </main>
       </div>

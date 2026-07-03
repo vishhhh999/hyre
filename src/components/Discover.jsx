@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Search, Globe, ChevronRight, Zap, X, RefreshCw, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react'
 import { C, FONT, R } from '../lib/tokens.js'
-import { JOBS } from '../lib/data.js'
+import { JOBS, JOBS_EXTENDED } from '../lib/data.js'
 import { Eyebrow, MatchScore, Tag, Check, PrimaryBtn } from './Primitives.jsx'
 
 // Sort button — same font/size as column headers, clickable
@@ -164,11 +164,13 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
   const [expanded, setExpanded] = useState(null)
   const [inputFocused, setInputFocused] = useState(false)
   const [sort, setSort] = useState({ field: null, dir: null })
+  const [loadedMore, setLoadedMore] = useState(false)
 
   const WORK_TYPES = ['All', 'Remote', 'Hybrid', 'On-site']
+  const ALL_JOBS = loadedMore ? [...JOBS, ...JOBS_EXTENDED] : JOBS
 
   const filtered = useMemo(() => {
-    let jobs = JOBS.filter(j =>
+    let jobs = ALL_JOBS.filter(j =>
       !appliedIds.includes(j.id) &&
       !dismissedIds.includes(j.id) &&
       (workTypeFilter === 'All' || j.workType === workTypeFilter) &&
@@ -287,21 +289,32 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
           />
         ))}
 
-        {/* Load more — placeholder for real API integration */}
-        <div style={{ paddingTop: 32, display: 'flex', justifyContent: 'center' }}>
-          <button style={{
-            background: C.surface, border: `1px solid ${C.border}`,
-            color: C.t2, fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
-            padding: '12px 24px', borderRadius: R.sm, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 8,
-            transition: 'border-color 0.12s ease, color 0.12s ease',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t2 }}
-          >
-            <RefreshCw size={15} strokeWidth={1.5} /> Load more opportunities
-          </button>
-        </div>
+        {/* Load more */}
+        {!loadedMore && (
+          <div style={{ paddingTop: 32, display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setLoadedMore(true)}
+              style={{
+                background: C.surface, border: `1px solid ${C.border}`,
+                color: C.t2, fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
+                padding: '12px 24px', borderRadius: R.sm, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
+                transition: 'border-color 0.12s ease, color 0.12s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t2 }}
+            >
+              <RefreshCw size={15} strokeWidth={1.5} /> Load more opportunities
+            </button>
+          </div>
+        )}
+        {loadedMore && (
+          <div style={{ paddingTop: 32, textAlign: 'center' }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.t3, letterSpacing: '0.08em' }}>
+              ALL ROLES LOADED
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Floating action bar */}
@@ -326,7 +339,7 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
             }}>
               Clear
             </button>
-            <PrimaryBtn onClick={() => { onEnterDeck(JOBS.filter(j => selected.includes(j.id))); setSelected([]) }}>
+            <PrimaryBtn onClick={() => { onEnterDeck(ALL_JOBS.filter(j => selected.includes(j.id))); setSelected([]) }}>
               <Zap size={15} strokeWidth={2} /> Review & send {selected.length}
             </PrimaryBtn>
           </div>

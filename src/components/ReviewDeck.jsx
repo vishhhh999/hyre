@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Send, Pencil, SkipForward, FileText, Globe, Loader, Sparkles, ExternalLink } from 'lucide-react'
 import { C, FONT, R } from '../lib/tokens.js'
-import { generateEmail, buildMailto } from '../lib/api.js'
+import { generateEmail, buildGmailUrl } from '../lib/api.js'
 import { Eyebrow, MatchScore, Kbd, Skeleton, PrimaryBtn, GhostBtn, Tag } from './Primitives.jsx'
 
 function DeckComplete({ sentCount, skippedCount, onExit }) {
@@ -70,8 +70,8 @@ export default function ReviewDeck({ queue, profile, onSend, onExit }) {
   const handleOpenMailto = () => {
     if (loading) return
     setSending(true)
-    const mailto = buildMailto(job, emails[job.id] || '', profile)
-    window.open(mailto, '_blank')
+    const gmailUrl = buildGmailUrl(job, emails[job.id] || '', profile)
+    window.open(gmailUrl, '_blank')
     setTimeout(() => {
       setSending(false)
       advance('sent')

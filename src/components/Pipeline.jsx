@@ -3,7 +3,7 @@ import { AlertCircle, RefreshCw, Send, Loader, ArrowRight } from 'lucide-react'
 import { C, FONT, R } from '../lib/tokens.js'
 import { STAGES } from '../lib/data.js'
 import { Eyebrow, PrimaryBtn, GhostBtn, Skeleton } from './Primitives.jsx'
-import { generateFollowUp, buildMailto } from '../lib/api.js'
+import { generateFollowUp, buildGmailUrl } from '../lib/api.js'
 
 function FollowUpModal({ app, profile, onClose, onSent }) {
   const [body, setBody] = useState('')
@@ -20,8 +20,8 @@ function FollowUpModal({ app, profile, onClose, onSent }) {
 
   const send = () => {
     setSending(true)
-    const mailto = buildMailto(app, body, profile)
-    window.open(mailto, '_blank')
+    const gmailUrl = buildGmailUrl(app, body, profile)
+    window.open(gmailUrl, '_blank')
     setTimeout(() => {
       setSending(false)
       onSent(app.id)
