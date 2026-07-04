@@ -214,10 +214,6 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
 
     return jobs
   }, [allJobs, pipelineIds, dismissedIds, query, sort])
-    }
-
-    return jobs
-  }, [allJobs, pipelineIds, dismissedIds, query, sort])
 
   const toggle = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   const allSelected = filtered.length > 0 && filtered.every(j => selected.includes(j.id))

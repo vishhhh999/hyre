@@ -192,17 +192,21 @@ export default function ReviewDeck({ queue, profile, emailCache, onSend, onDraft
           )}
 
           {/* Keyboard hints */}
-          <div style={{ marginTop: 'auto', paddingTop: 36, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {hasEmail
+          {(() => {
+            const hints = hasEmail
               ? [{ k: '↵', label: 'Open in Gmail' }, { k: 'D', label: 'Save as draft' }, { k: 'E', label: 'Edit first' }, { k: '→', label: 'Skip' }]
               : [{ k: '↵', label: 'Open listing' }, { k: '→', label: 'Skip' }]
-            }.map(h => (
-              <div key={h.k} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Kbd k={h.k} />
-                <span style={{ fontFamily: FONT.sans, fontSize: 13, color: C.t3 }}>{h.label}</span>
+            return (
+              <div style={{ marginTop: 'auto', paddingTop: 36, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {hints.map(h => (
+                  <div key={h.k} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Kbd k={h.k} />
+                    <span style={{ fontFamily: FONT.sans, fontSize: 13, color: C.t3 }}>{h.label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </div>
 
         {/* RIGHT: email or listing */}
