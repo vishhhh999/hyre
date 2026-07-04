@@ -63,7 +63,7 @@ function JobRow({ job, selected, onToggle, expanded, onExpand, onDismiss }) {
         onMouseLeave={() => setHovered(false)}
         style={{
           display: 'grid',
-          gridTemplateColumns: '20px 1fr 130px 90px 110px 120px 36px',
+          gridTemplateColumns: '20px 1fr 120px 90px 100px 110px 110px 36px',
           gap: 16, alignItems: 'center',
           padding: '17px 24px',
           margin: '0 -24px',
@@ -113,6 +113,11 @@ function JobRow({ job, selected, onToggle, expanded, onExpand, onDismiss }) {
           letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums',
         }}>
           {job.salary || 'N/A'}
+        </div>
+
+        {/* Experience required */}
+        <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.t2, letterSpacing: '0.02em' }}>
+          {job.experience || 'Not listed'}
         </div>
 
         {/* Match */}
@@ -172,7 +177,7 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
   const [expanded, setExpanded] = useState(null)
   const [inputFocused, setInputFocused] = useState(false)
   const [sort, setSort] = useState({ field: null, dir: null })
-  const [loadState, setLoadState] = useState(cachedLiveJobs.length > 0 ? 'done' : 'idle')
+  const [loadState, setLoadState] = useState('idle') // always starts idle so refresh is always available
   const [liveJobs, setLiveJobs] = useState(cachedLiveJobs)
 
   const loadMore = async () => {
@@ -259,7 +264,7 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
         {/* Ledger header */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '20px 1fr 130px 90px 110px 120px 36px',
+          gridTemplateColumns: '20px 1fr 120px 90px 100px 110px 110px 36px',
           gap: 16, padding: '0 24px 12px', margin: '0 -24px',
           alignItems: 'center',
         }}>
@@ -277,6 +282,7 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <SortBtn label="Salary" field="salary" sort={sort} setSort={setSort} />
           </div>
+          <Eyebrow>Experience</Eyebrow>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <SortBtn label="Match" field="match" sort={sort} setSort={setSort} />
             <ResetSort sort={sort} setSort={setSort} />
@@ -307,30 +313,30 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
           />
         ))}
 
-        {/* Load more */}
+        {/* Load more / refresh */}
         <div style={{ paddingTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          {loadState !== 'done' && (
-            <button
-              onClick={loadMore}
-              disabled={loadState === 'loading'}
-              style={{
-                background: C.surface, border: `1px solid ${C.border}`,
-                color: loadState === 'loading' ? C.t3 : C.t2,
-                fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
-                padding: '12px 24px', borderRadius: R.sm,
-                cursor: loadState === 'loading' ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: 8,
-                transition: 'border-color 0.12s ease, color 0.12s ease',
-              }}
-              onMouseEnter={e => { if (loadState !== 'loading') { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 } }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = loadState === 'loading' ? C.t3 : C.t2 }}
-            >
-              {loadState === 'loading'
-                ? <><Loader size={15} strokeWidth={1.5} style={{ animation: 'spin 0.8s linear infinite' }} /> fetching live jobs...</>
-                : <><RefreshCw size={15} strokeWidth={1.5} /> load live opportunities from Remotive</>
-              }
-            </button>
-          )}
+          <button
+            onClick={loadMore}
+            disabled={loadState === 'loading'}
+            style={{
+              background: C.surface, border: `1px solid ${C.border}`,
+              color: loadState === 'loading' ? C.t3 : C.t2,
+              fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
+              padding: '12px 24px', borderRadius: R.sm,
+              cursor: loadState === 'loading' ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'border-color 0.12s ease, color 0.12s ease',
+            }}
+            onMouseEnter={e => { if (loadState !== 'loading') { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 } }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = loadState === 'loading' ? C.t3 : C.t2 }}
+          >
+            {loadState === 'loading'
+              ? <><Loader size={15} strokeWidth={1.5} style={{ animation: 'spin 0.8s linear infinite' }} /> fetching live jobs...</>
+              : loadState === 'done'
+                ? <><RefreshCw size={15} strokeWidth={1.5} /> refresh opportunities</>
+                : <><RefreshCw size={15} strokeWidth={1.5} /> load live opportunities</>
+            }
+          </button>
           {loadState === 'error' && (
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.error, letterSpacing: '0.06em' }}>
               FETCH FAILED, TRY AGAIN
@@ -342,7 +348,7 @@ export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, on
             </span>
           )}
           <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.t3, letterSpacing: '0.08em' }}>
-            PULLS RECENT REMOTE DESIGN ROLES FROM REMOTIVE.COM
+            REMOTIVE + ADZUNA (IF CONFIGURED)
           </span>
         </div>
       </div>

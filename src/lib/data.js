@@ -15,8 +15,6 @@ export const DEFAULT_PROFILE = {
   portfolioFileName: null,
 }
 
-// Mock jobs use real apply URLs only. No invented email addresses.
-// Email field is null unless a studio publicly lists one on their site.
 export const JOBS = [
   {
     id: 1,
@@ -27,6 +25,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$65–85k',
     salaryNum: 75,
+    experience: '3–5 yrs',
     email: null,
     applyUrl: 'https://superside.com/careers',
     tags: ['Brand', 'Scale', 'Systems'],
@@ -43,6 +42,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$80–110k',
     salaryNum: 95,
+    experience: '4–7 yrs',
     email: null,
     applyUrl: 'https://www.framer.com/jobs/',
     tags: ['Visual', 'Product', 'Web'],
@@ -59,6 +59,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$90–120k',
     salaryNum: 105,
+    experience: '3–6 yrs',
     email: null,
     applyUrl: 'https://linear.app/careers',
     tags: ['Brand', 'Identity', 'Systems'],
@@ -75,6 +76,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$100–130k',
     salaryNum: 115,
+    experience: '5–8 yrs',
     email: null,
     applyUrl: 'https://www.loom.com/careers',
     tags: ['Leadership', 'Brand', 'Product'],
@@ -91,6 +93,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$90–120k',
     salaryNum: 105,
+    experience: '3–5 yrs',
     email: null,
     applyUrl: 'https://vercel.com/careers',
     tags: ['Visual', 'Brand', 'Web'],
@@ -107,6 +110,7 @@ export const JOBS = [
     type: 'Full-time',
     salary: '$70–95k',
     salaryNum: 82,
+    experience: '2–4 yrs',
     email: null,
     applyUrl: 'https://pitch.com/jobs',
     tags: ['Brand', 'Identity', 'Motion'],
@@ -116,7 +120,6 @@ export const JOBS = [
   },
 ]
 
-// Second batch — shown after "load more" is clicked
 export const JOBS_EXTENDED = [
   {
     id: 9,
@@ -127,6 +130,7 @@ export const JOBS_EXTENDED = [
     type: 'Full-time',
     salary: '$100–140k',
     salaryNum: 120,
+    experience: '4–7 yrs',
     email: null,
     applyUrl: 'https://www.figma.com/careers/',
     tags: ['Brand', 'Systems', 'Digital'],
@@ -143,6 +147,7 @@ export const JOBS_EXTENDED = [
     type: 'Full-time',
     salary: '$95–130k',
     salaryNum: 112,
+    experience: '3–5 yrs',
     email: null,
     applyUrl: 'https://www.notion.so/careers',
     tags: ['Visual', 'Brand', 'Web'],
@@ -159,6 +164,7 @@ export const JOBS_EXTENDED = [
     type: 'Full-time',
     salary: '$70–90k',
     salaryNum: 80,
+    experience: '2–4 yrs',
     email: null,
     applyUrl: 'https://www.instrument.com/careers',
     tags: ['Web', 'Motion', 'Brand'],
@@ -175,6 +181,7 @@ export const JOBS_EXTENDED = [
     type: 'Full-time',
     salary: '$85–115k',
     salaryNum: 100,
+    experience: '3–6 yrs',
     email: null,
     applyUrl: 'https://webflow.com/careers',
     tags: ['Brand', 'Web', 'Systems'],
