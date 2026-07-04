@@ -11,10 +11,9 @@ async function callClaude(system, user, maxTokens = 1000) {
   return data.text
 }
 
-// Normalise portfolio URL — always www. prefix, no protocol
 function portfolioUrl(raw) {
   if (!raw) return null
-  let clean = raw.replace(/^https?:\/\//, '').replace(/^www\./, '')
+  const clean = raw.replace(/^https?:\/\//, '').replace(/^www\./, '')
   return `www.${clean}`
 }
 
@@ -32,16 +31,17 @@ export async function generateEmail(job, profile) {
     portfolio           ? `Portfolio: ${portfolio}` : null,
   ].filter(Boolean).join('\n')
 
-  const sys = `You write job application emails for a designer. Your job is to write a real, specific, confident email — not a template.
+  const sys = `You write job application emails for a designer. Specific, direct, confident.
 
-STRICT RULES:
-- Read the applicant profile carefully and reference specific details from it (skills, background, about)
-- Never invent details not present in the profile
-- Never use square-bracket placeholders like [studio name] or [portfolio URL] — use actual values or omit
-- No "I am excited to apply", no flattery, no filler phrases
+RULES:
+- Read the applicant profile and reference specific details from it
+- Never invent details not in the profile
+- No square-bracket placeholders ever
+- No "I am excited to apply", no flattery, no filler
+- NEVER use em dashes (the — character). Use commas, colons, or restructure instead
 - 3 short paragraphs, under 160 words total
-- Sign off with first name only: ${firstName}
-- Return ONLY the email body — no subject line, no preamble, no "Here is the email:" intro`
+- Sign with first name only: ${firstName}
+- Return ONLY the email body, no subject line, no preamble`
 
   const usr = `JOB:
 Title: ${job.title}
@@ -52,7 +52,7 @@ Why this person matches: ${job.why}
 APPLICANT PROFILE:
 ${profileBlock}
 
-Write the email. Draw from the profile details above — reference the applicant's actual skills and background as they relate to this specific role.`
+Write the email. Reference actual skills and background from the profile as they relate to this role.`
 
   try {
     return await callClaude(sys, usr)
@@ -67,7 +67,7 @@ export async function generateFollowUp(app, profile) {
   const portfolio = portfolioUrl(profile.portfolio)
 
   const sys = `You write follow-up emails for job applications. Short, direct, not desperate.
-RULES: 3 sentences max. No placeholders. Sign with first name only: ${firstName}. Return ONLY the email body.`
+RULES: 3 sentences max. No placeholders. No em dashes. Sign with first name only: ${firstName}. Return ONLY the email body.`
 
   const usr = `Follow-up for: ${app.title} at ${app.company}, sent ${days} days ago.
 Applicant: ${profile.name || 'the applicant'}${portfolio ? `, portfolio: ${portfolio}` : ''}${profile.about ? `\nBackground: ${profile.about}` : ''}`
@@ -98,6 +98,5 @@ const fallbackFollowUp = (app, profile, days) => {
   const firstName = (profile.name || 'Vishesh').split(' ')[0]
   const portfolio = portfolioUrl(profile.portfolio)
   const portfolioLine = portfolio ? ` Portfolio: ${portfolio}.` : ''
-  return `Hi ${app.company} team,\n\nFollowing up on my ${app.title} application from ${days} days ago.${portfolioLine}\n\nStill very interested — happy to talk whenever suits.\n\n${firstName}`
+  return `Hi ${app.company} team,\n\nFollowing up on my ${app.title} application from ${days} days ago.${portfolioLine}\n\nStill very interested, happy to talk whenever suits.\n\n${firstName}`
 }
-

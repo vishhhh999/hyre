@@ -166,14 +166,14 @@ function JobRow({ job, selected, onToggle, expanded, onExpand, onDismiss }) {
   )
 }
 
-export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterDeck }) {
+export default function Discover({ pipelineIds, dismissedIds, cachedLiveJobs, onCacheLiveJobs, onDismiss, onEnterDeck }) {
   const [selected, setSelected] = useState([])
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState(null)
   const [inputFocused, setInputFocused] = useState(false)
   const [sort, setSort] = useState({ field: null, dir: null })
-  const [loadState, setLoadState] = useState('idle')
-  const [liveJobs, setLiveJobs] = useState([])
+  const [loadState, setLoadState] = useState(cachedLiveJobs.length > 0 ? 'done' : 'idle')
+  const [liveJobs, setLiveJobs] = useState(cachedLiveJobs)
 
   const loadMore = async () => {
     setLoadState('loading')
@@ -184,22 +184,20 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
       const existingIds = new Set([...JOBS, ...JOBS_EXTENDED].map(j => String(j.id)))
       const fresh = (data.jobs || [])
         .filter(j => !existingIds.has(String(j.id)))
-        .map(j => ({ ...j, workType: j.workType || 'Remote' })) // ensure workType always exists
+        .map(j => ({ ...j, workType: j.workType || 'Remote' }))
       setLiveJobs(fresh)
+      onCacheLiveJobs(fresh)
       setLoadState('done')
     } catch {
       setLoadState('error')
     }
   }
 
-  const allJobs = useMemo(
-    () => [...JOBS, ...JOBS_EXTENDED, ...liveJobs],
-    [liveJobs]
-  )
+  const allJobs = useMemo(() => [...JOBS, ...JOBS_EXTENDED, ...liveJobs], [liveJobs])
 
   const filtered = useMemo(() => {
     let jobs = allJobs.filter(j =>
-      !appliedIds.includes(j.id) &&
+      !pipelineIds.includes(j.id) &&
       !dismissedIds.includes(j.id) &&
       (!query || (j.title + j.company + (j.location || '')).toLowerCase().includes(query.toLowerCase()))
     )
@@ -207,22 +205,19 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
     if (sort.field) {
       jobs = [...jobs].sort((a, b) => {
         let va, vb
-        if (sort.field === 'salary') {
-          va = a.salaryNum || 0
-          vb = b.salaryNum || 0
-        } else if (sort.field === 'match') {
-          va = a.match || 0
-          vb = b.match || 0
-        } else if (sort.field === 'type') {
-          va = WORK_TYPE_ORDER[a.workType] ?? 1
-          vb = WORK_TYPE_ORDER[b.workType] ?? 1
-        }
+        if (sort.field === 'salary') { va = a.salaryNum || 0; vb = b.salaryNum || 0 }
+        else if (sort.field === 'match') { va = a.match || 0; vb = b.match || 0 }
+        else if (sort.field === 'type') { va = WORK_TYPE_ORDER[a.workType] ?? 1; vb = WORK_TYPE_ORDER[b.workType] ?? 1 }
         return sort.dir === 'asc' ? va - vb : vb - va
       })
     }
 
     return jobs
-  }, [allJobs, appliedIds, dismissedIds, query, sort])
+  }, [allJobs, pipelineIds, dismissedIds, query, sort])
+    }
+
+    return jobs
+  }, [allJobs, pipelineIds, dismissedIds, query, sort])
 
   const toggle = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   const allSelected = filtered.length > 0 && filtered.every(j => selected.includes(j.id))

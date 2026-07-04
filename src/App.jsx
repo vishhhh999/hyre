@@ -14,7 +14,6 @@ const NAV = [
   { id: 'profile',  label: 'Profile',  icon: User },
 ]
 
-// localStorage helpers
 const LS = {
   get: (key, fallback) => {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback }
@@ -26,14 +25,27 @@ const LS = {
 
 export default function App() {
   const [nav, setNav] = useState('discover')
-  const [applied, setApplied] = useState(() => LS.get('hyre:applied', []))
+
+  // pipeline entries — all stages including 'drafted'
+  const [pipeline, setPipeline] = useState(() => LS.get('hyre:pipeline', []))
+
+  // dismissed job IDs
   const [dismissed, setDismissed] = useState(() => LS.get('hyre:dismissed', []))
+
+  // email cache: { [jobId]: emailBodyString }
+  const [emailCache, setEmailCache] = useState(() => LS.get('hyre:emailcache', {}))
+
+  // cached live jobs from last API fetch
+  const [cachedLiveJobs, setCachedLiveJobs] = useState(() => LS.get('hyre:livejobs', []))
+
   const [deckQueue, setDeckQueue] = useState(null)
   const [profile, setProfile] = useState(() => LS.get('hyre:profile', { ...DEFAULT_PROFILE }))
 
-  // Persist on every change
-  useEffect(() => { LS.set('hyre:applied', applied) }, [applied])
+  // persist everything
+  useEffect(() => { LS.set('hyre:pipeline', pipeline) }, [pipeline])
   useEffect(() => { LS.set('hyre:dismissed', dismissed) }, [dismissed])
+  useEffect(() => { LS.set('hyre:emailcache', emailCache) }, [emailCache])
+  useEffect(() => { LS.set('hyre:livejobs', cachedLiveJobs) }, [cachedLiveJobs])
   useEffect(() => { LS.set('hyre:profile', profile) }, [profile])
 
   const handleSaveProfile = useCallback((data) => {
@@ -41,13 +53,37 @@ export default function App() {
     LS.set('hyre:profile', data)
   }, [])
 
-  const handleSend = useCallback((job) => {
-    setApplied(p => {
+  // called from ReviewDeck when user clicks "open in Gmail" — adds to pipeline as 'sent'
+  const handleSend = useCallback((job, emailBody) => {
+    // cache the email so it never regenerates
+    setEmailCache(p => {
+      const updated = { ...p, [job.id]: emailBody }
+      LS.set('hyre:emailcache', updated)
+      return updated
+    })
+    setPipeline(p => {
       if (p.find(a => a.id === job.id)) return p
       return [{
         id: job.id, title: job.title, company: job.company,
-        email: job.email, stage: 'sent',
-        sentAt: new Date().toISOString(), followUps: 0,
+        email: job.email, applyUrl: job.applyUrl || null,
+        stage: 'sent', sentAt: new Date().toISOString(), followUps: 0,
+      }, ...p]
+    })
+  }, [])
+
+  // called from ReviewDeck when user saves draft without sending
+  const handleDraft = useCallback((job, emailBody) => {
+    setEmailCache(p => {
+      const updated = { ...p, [job.id]: emailBody }
+      LS.set('hyre:emailcache', updated)
+      return updated
+    })
+    setPipeline(p => {
+      if (p.find(a => a.id === job.id)) return p
+      return [{
+        id: job.id, title: job.title, company: job.company,
+        email: job.email, applyUrl: job.applyUrl || null,
+        stage: 'drafted', sentAt: new Date().toISOString(), followUps: 0,
       }, ...p]
     })
   }, [])
@@ -56,13 +92,22 @@ export default function App() {
     setDismissed(p => [...p, id])
   }, [])
 
-  const handleFollowUp = (id) =>
-    setApplied(p => p.map(a => a.id === id ? { ...a, followUps: a.followUps + 1 } : a))
+  const handleMoveStage = useCallback((id, stage) => {
+    setPipeline(p => p.map(a => a.id === id ? { ...a, stage } : a))
+  }, [])
 
-  const handleAdvanceStage = (id, stage) =>
-    setApplied(p => p.map(a => a.id === id ? { ...a, stage } : a))
+  const handleRemoveFromPipeline = useCallback((id) => {
+    setPipeline(p => p.filter(a => a.id !== id))
+  }, [])
 
-  const followUpCount = applied.filter(a =>
+  const handleFollowUp = useCallback((id) => {
+    setPipeline(p => p.map(a => a.id === id ? { ...a, followUps: a.followUps + 1 } : a))
+  }, [])
+
+  // all job IDs in pipeline — exclude from discover
+  const pipelineIds = pipeline.map(a => a.id)
+
+  const followUpCount = pipeline.filter(a =>
     a.stage === 'sent' &&
     (Date.now() - new Date(a.sentAt)) / 86400000 >= 7 &&
     a.followUps === 0
@@ -82,7 +127,6 @@ export default function App() {
       `}</style>
 
       <div style={{ display: 'flex', height: '100vh', background: C.canvas }}>
-        {/* Sidebar */}
         <aside style={{
           width: 200, flexShrink: 0,
           borderRight: `1px solid ${C.border}`,
@@ -129,22 +173,25 @@ export default function App() {
           </nav>
         </aside>
 
-        {/* Main */}
-        <main style={{ flex: 1, height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <main style={{ flex: 1, height: '100vh', overflow: 'hidden' }}>
           {nav === 'discover' && (
             <Discover
-              appliedIds={applied.map(a => a.id)}
+              pipelineIds={pipelineIds}
               dismissedIds={dismissed}
+              cachedLiveJobs={cachedLiveJobs}
+              onCacheLiveJobs={setCachedLiveJobs}
               onDismiss={handleDismiss}
               onEnterDeck={setDeckQueue}
             />
           )}
           {nav === 'pipeline' && (
             <Pipeline
-              applied={applied}
+              pipeline={pipeline}
+              emailCache={emailCache}
               profile={profile}
+              onMoveStage={handleMoveStage}
+              onRemove={handleRemoveFromPipeline}
               onFollowUp={handleFollowUp}
-              onAdvanceStage={handleAdvanceStage}
             />
           )}
           {nav === 'profile' && (
@@ -157,7 +204,9 @@ export default function App() {
         <ReviewDeck
           queue={deckQueue}
           profile={profile}
+          emailCache={emailCache}
           onSend={handleSend}
+          onDraft={handleDraft}
           onExit={() => { setDeckQueue(null); setNav('pipeline') }}
         />
       )}

@@ -203,6 +203,7 @@ export const JOBS_EXTENDED = [
 ]
 
 export const STAGES = [
+  { id: 'drafted',   label: 'Drafted',   color: '#4a4a52' },
   { id: 'sent',      label: 'Sent',      color: '#52504c' },
   { id: 'opened',    label: 'Opened',    color: '#f2994a' },
   { id: 'replied',   label: 'Replied',   color: '#b8f5a0' },
