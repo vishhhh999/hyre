@@ -70,7 +70,8 @@ export default function ReviewDeck({ queue, profile, onSend, onExit }) {
   const handleOpenMailto = () => {
     if (loading) return
     setSending(true)
-    const gmailUrl = buildGmailUrl(job, emails[job.id] || '', profile)
+    const subject = `${job.title} — ${profile.name || 'Application'}`
+    const gmailUrl = buildGmailUrl(job.email, subject, emails[job.id] || '')
     window.open(gmailUrl, '_blank')
     setTimeout(() => {
       setSending(false)

@@ -20,7 +20,8 @@ function FollowUpModal({ app, profile, onClose, onSent }) {
 
   const send = () => {
     setSending(true)
-    const gmailUrl = buildGmailUrl(app, body, profile)
+    const subject = `Following up — ${app.title}`
+    const gmailUrl = buildGmailUrl(app.email, subject, body)
     window.open(gmailUrl, '_blank')
     setTimeout(() => {
       setSending(false)

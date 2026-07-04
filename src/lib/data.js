@@ -7,12 +7,12 @@ export const DEFAULT_PROFILE = {
   role: '',
   experience: '',
   skills: '',
+  about: '',
   portfolio: '',
   email: '',
   phone: '',
   resumeName: null,
   portfolioFileName: null,
-  photoName: null,
 }
 
 export const JOBS = [

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Globe, ChevronRight, Zap, X, RefreshCw, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react'
+import { Search, Globe, ChevronRight, Zap, X, RefreshCw, ArrowUp, ArrowDown, RotateCcw, Loader } from 'lucide-react'
 import { C, FONT, R } from '../lib/tokens.js'
 import { JOBS, JOBS_EXTENDED } from '../lib/data.js'
 import { Eyebrow, MatchScore, Tag, Check, PrimaryBtn } from './Primitives.jsx'
@@ -164,10 +164,27 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
   const [expanded, setExpanded] = useState(null)
   const [inputFocused, setInputFocused] = useState(false)
   const [sort, setSort] = useState({ field: null, dir: null })
-  const [loadedMore, setLoadedMore] = useState(false)
+  const [loadState, setLoadState] = useState('idle') // idle | loading | done | error
+  const [liveJobs, setLiveJobs] = useState([])
 
   const WORK_TYPES = ['All', 'Remote', 'Hybrid', 'On-site']
-  const ALL_JOBS = loadedMore ? [...JOBS, ...JOBS_EXTENDED] : JOBS
+  const ALL_JOBS = [...JOBS, ...JOBS_EXTENDED, ...liveJobs]
+
+  const loadMore = async () => {
+    setLoadState('loading')
+    try {
+      const res = await fetch('/api/jobs')
+      if (!res.ok) throw new Error('fetch failed')
+      const data = await res.json()
+      // Deduplicate against existing IDs
+      const existingIds = new Set(ALL_JOBS.map(j => String(j.id)))
+      const fresh = (data.jobs || []).filter(j => !existingIds.has(String(j.id)))
+      setLiveJobs(p => [...p, ...fresh])
+      setLoadState('done')
+    } catch {
+      setLoadState('error')
+    }
+  }
 
   const filtered = useMemo(() => {
     let jobs = ALL_JOBS.filter(j =>
@@ -289,29 +306,43 @@ export default function Discover({ appliedIds, dismissedIds, onDismiss, onEnterD
           />
         ))}
 
-        {/* Load more */}
-        {!loadedMore && (
-          <div style={{ paddingTop: 32, display: 'flex', justifyContent: 'center' }}>
+        {/* Load more — calls live Remotive API */}
+        {loadState !== 'done' && (
+          <div style={{ paddingTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <button
-              onClick={() => setLoadedMore(true)}
+              onClick={loadMore}
+              disabled={loadState === 'loading'}
               style={{
                 background: C.surface, border: `1px solid ${C.border}`,
-                color: C.t2, fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
-                padding: '12px 24px', borderRadius: R.sm, cursor: 'pointer',
+                color: loadState === 'loading' ? C.t3 : C.t2,
+                fontFamily: FONT.sans, fontSize: 14, fontWeight: 500,
+                padding: '12px 24px', borderRadius: R.sm,
+                cursor: loadState === 'loading' ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: 8,
                 transition: 'border-color 0.12s ease, color 0.12s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t2 }}
+              onMouseEnter={e => { if (loadState !== 'loading') { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.color = C.t1 } }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = loadState === 'loading' ? C.t3 : C.t2 }}
             >
-              <RefreshCw size={15} strokeWidth={1.5} /> Load more opportunities
+              {loadState === 'loading'
+                ? <><Loader size={15} strokeWidth={1.5} style={{ animation: 'spin 0.8s linear infinite' }} /> Fetching live jobs…</>
+                : <><RefreshCw size={15} strokeWidth={1.5} /> Load live opportunities from Remotive</>
+              }
             </button>
+            {loadState === 'error' && (
+              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.error, letterSpacing: '0.06em' }}>
+                FETCH FAILED — check network or try again
+              </span>
+            )}
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.t3, letterSpacing: '0.08em' }}>
+              PULLS RECENT REMOTE DESIGN ROLES FROM REMOTIVE.COM
+            </span>
           </div>
         )}
-        {loadedMore && (
+        {loadState === 'done' && (
           <div style={{ paddingTop: 32, textAlign: 'center' }}>
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.t3, letterSpacing: '0.08em' }}>
-              ALL ROLES LOADED
+              {liveJobs.length} LIVE ROLES LOADED · {ALL_JOBS.length} TOTAL
             </span>
           </div>
         )}
